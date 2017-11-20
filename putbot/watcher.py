@@ -15,6 +15,11 @@ class Watcher:
 
     def run(self):
         logger.info("started")
+
+        # process existing files first
+        for filename in os.listdir(self._directory):
+            self._process(filename)
+
         i = inotify.adapters.Inotify()
         i.add_watch(self._directory, mask=inotify.constants.IN_CLOSE_WRITE|inotify.constants.IN_MOVED_TO)
 
