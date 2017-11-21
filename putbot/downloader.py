@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import os.path
+import shutil
 import subprocess
 
 KB = 1024
@@ -113,4 +114,5 @@ class Downloader:
 
     def _move(self, fobj, src, dst):
         logger.info("move {} from {} to {}".format(fobj.name, src, dst))
+        shutil.move(os.path.join(src, fobj.name), dst)
 
