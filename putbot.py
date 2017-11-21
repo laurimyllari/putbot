@@ -8,6 +8,7 @@ from multiprocessing import Process, Queue
 from threading import Event
 from time import sleep
 
+from putbot.downloader import Downloader
 from putbot.watcher import Watcher
 
 class PutBot(object):
@@ -25,15 +26,18 @@ class PutBot(object):
         self._watcher_process = Process(target = self._watcher.run)
         self._watcher_process.start()
 
-        logging.info("launch put.io polling process for folder {}".format(self._putio_rootfolder))
-        logging.info("launch callback listener process")
         logging.info("launch downloader process ({} to {})".format(self._incomplete, self._downloads))
+        self._downloader = Downloader(self._exit, self._client, self._putio_rootfolder, self._incomplete, self._downloads)
+        self._downloader_process = Process(target = self._downloader.run)
+        self._downloader_process.start()
 
     def exit(self):
         logging.info("shut down putbot")
         self._exit.set()
         self._watcher_process.join()
         logging.info("watcher exited")
+        self._downloader_process.join()
+        logging.info("downloader exited")
 
 
 if __name__ == '__main__':
