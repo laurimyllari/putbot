@@ -4,8 +4,7 @@ import logging
 import os
 
 from ConfigParser import SafeConfigParser
-from multiprocessing import Process, Queue
-from threading import Event
+from multiprocessing import Process, Queue, Event
 from time import sleep
 
 from putbot.downloader import Downloader
