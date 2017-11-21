@@ -1,7 +1,12 @@
+import binascii
+import io
 import logging
 import os
 import os.path
 import subprocess
+
+KB = 1024
+CHUNK_SIZE = 256 * KB
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +39,18 @@ class Downloader:
         logger.info("exiting")
 
     def _process(self, f):
-        logger.debug("process {}".format(f.name))
+        logger.info("process {}".format(f.name))
 
         self._download(f, self._incomplete)
         if self._verify(f, self._incomplete):
-            logger.debug("verified {}".format(f.name))
+            logger.info("verified {}".format(f.name))
             self._move(f, self._incomplete, self._downloads)
             f.delete()
         else:
-            logger.debug("verification failed {}".format(f.name))
+            logger.warning("verification failed {}".format(f.name))
 
     def _download(self, f, path):
-        logger.debug("download {} to {}".format(f.name, path))
+        logger.info("download {} to {}".format(f.name, path))
         if f.file_type == "FOLDER":
             logger.debug("{} is a folder".format(f.name))
             destdir = os.path.join(path, f.name)
@@ -62,8 +67,8 @@ class Downloader:
         destfile = os.path.join(path, f.name)
 
         if os.path.exists(destfile):
-            if os.path.getsize == f.size and not os.path.exists(destfile+".aria2"):
-                logger.debug("{} is already correct size ({})".format(destdir, f.size))
+            if os.path.getsize(destfile) == f.size and not os.path.exists(destfile+".aria2"):
+                logger.info("{} is already correct size ({})".format(destfile, f.size))
                 return
 
         dl_redirect = self._client.request('/files/%s/download' % f.id, raw=True, allow_redirects=False)
@@ -74,13 +79,38 @@ class Downloader:
             subprocess.call(["aria2c", "-c", "-x4", "-d", path, "-o", f.name, url])
 
     def _verify(self, f, path):
-        logger.debug("verify {} in {}".format(f.name, path))
-        return False
+        logger.info("verify {} in {}".format(f.name, path))
+        if f.file_type == "FOLDER":
+            logger.debug("{} is a folder".format(f.name))
+            destdir = os.path.join(path, f.name)
+            for child in f.dir():
+                if not self._verify(child, destdir):
+                    return False
+        else:
+            logger.debug("{} is a file".format(f.name))
+            return self._verify_file(f, path)
+        return True
 
-    def _verify_file(self, f, path):
-        logger.debug("verify file {} in {}".format(f.name, path))
-        return False
+    def _verify_file(self, fobj, path):
+        logger.debug("verify file {} in {}".format(fobj.name, path))
+        crcbin = 0
+        filepath = os.path.join(path, fobj.name)
+        with io.open(filepath, 'rb') as f:
+            while True:
+                chunk = f.read(CHUNK_SIZE)
+                if not chunk:
+                    break
 
-    def _move(self, f, src, dst):
-        logger.debug("move {} to {}".format(src, dst))
+                crcbin = binascii.crc32(chunk, crcbin) & 0xffffffff
+
+        crc32 = '%08x' % crcbin
+
+        if crc32 != fobj.crc32:
+            logging.error('file %s CRC32 is %s, should be %s' % (filepath, crc32, fobj.crc32))
+            return False
+
+        return True
+
+    def _move(self, fobj, src, dst):
+        logger.info("move {} from {} to {}".format(fobj.name, src, dst))
 
