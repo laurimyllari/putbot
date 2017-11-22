@@ -22,12 +22,9 @@ class Downloader:
     def run(self):
         logger.info("started")
 
-        # process existing files first
-        for f in self._client.File.list(parent_id=self._rootfolder):
-            self._process(f)
-
         try:
             while True:
+                self._poll_and_process()
                 self._exit_event.wait(60)
                 if self._exit_event.is_set():
                     logger.debug("downloader got exit event")
@@ -38,6 +35,11 @@ class Downloader:
             pass
 
         logger.info("exiting")
+
+    def _poll_and_process(self):
+        logger.info("checking for files to download")
+        for f in self._client.File.list(parent_id=self._rootfolder):
+            self._process(f)
 
     def _process(self, f):
         logger.info("process {}".format(f.name))
