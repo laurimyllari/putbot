@@ -4,7 +4,7 @@ import logging
 import os
 
 from ConfigParser import SafeConfigParser
-from multiprocessing import Process, Queue, Event
+from multiprocessing import Process, Queue
 from time import sleep
 
 from putbot.downloader import Downloader
@@ -17,22 +17,25 @@ class PutBot(object):
         self._torrents = torrents
         self._incomplete = incomplete
         self._downloads = downloads
-        self._exit = Event()
+        self._watcher_cmd_queue = Queue()
+        self._downloader_cmd_queue = Queue()
 
     def run(self):
         logging.info("launch torrent watcher process for {}".format(self._torrents))
-        self._watcher = Watcher(self._exit, self._torrents, self._client, self._putio_rootfolder)
+        self._watcher = Watcher(self._watcher_cmd_queue, self._torrents, self._client, self._putio_rootfolder)
         self._watcher_process = Process(target = self._watcher.run)
         self._watcher_process.start()
 
         logging.info("launch downloader process ({} to {})".format(self._incomplete, self._downloads))
-        self._downloader = Downloader(self._exit, self._client, self._putio_rootfolder, self._incomplete, self._downloads)
+        self._downloader = Downloader(self._downloader_cmd_queue, self._client, self._putio_rootfolder, self._incomplete, self._downloads)
         self._downloader_process = Process(target = self._downloader.run)
         self._downloader_process.start()
 
     def exit(self):
         logging.info("shut down putbot")
-        self._exit.set()
+        self._watcher_cmd_queue.put_nowait("exit")
+        self._downloader_cmd_queue.put_nowait("exit")
+
         self._watcher_process.join()
         logging.info("watcher exited")
         self._downloader_process.join()

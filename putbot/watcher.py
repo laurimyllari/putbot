@@ -4,11 +4,13 @@ import logging
 import os
 import os.path
 
+from Queue import Empty
+
 logger = logging.getLogger(__name__)
 
 class Watcher:
-    def __init__(self, exit_event, directory, client, rootfolder):
-        self._exit_event = exit_event
+    def __init__(self, cmd_queue, directory, client, rootfolder):
+        self._cmd_queue = cmd_queue
         self._directory = directory
         self._client = client
         self._rootfolder = rootfolder
@@ -35,9 +37,15 @@ class Watcher:
                         self._process(filename.decode('utf-8'))
                     except Exception as e:
                         logger.exception("error processing {}".format(filename))
-                elif self._exit_event.is_set():
-                    logger.debug("watcher got exit event")
-                    break
+                else:
+                    # inotify timed out, check command queue
+                    try:
+                        cmd = self._cmd_queue.get_nowait()
+                        if cmd == "exit":
+                            logger.debug("watcher got exit event")
+                            break
+                    except Empty:
+                        pass
         except KeyboardInterrupt:
             logger.debug("watcher got keyboard interrupt")
         finally:

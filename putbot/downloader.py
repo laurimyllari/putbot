@@ -6,14 +6,16 @@ import os.path
 import shutil
 import subprocess
 
+from Queue import Empty
+
 KB = 1024
 CHUNK_SIZE = 256 * KB
 
 logger = logging.getLogger(__name__)
 
 class Downloader:
-    def __init__(self, exit_event, client, rootfolder, incomplete, downloads):
-        self._exit_event = exit_event
+    def __init__(self, cmd_queue, client, rootfolder, incomplete, downloads):
+        self._cmd_queue = cmd_queue
         self._client = client
         self._rootfolder = rootfolder
         self._incomplete = incomplete
@@ -25,10 +27,13 @@ class Downloader:
         try:
             while True:
                 self._poll_and_process()
-                self._exit_event.wait(60)
-                if self._exit_event.is_set():
-                    logger.debug("downloader got exit event")
-                    break
+                try:
+                    cmd = self._cmd_queue.get(timeout=60)
+                    if cmd == "exit":
+                        logger.debug("downloader got exit event")
+                        break
+                except Empty:
+                    pass
         except KeyboardInterrupt:
             logger.debug("watcher got keyboard interrupt")
         finally:
