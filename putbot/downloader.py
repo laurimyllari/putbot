@@ -28,10 +28,13 @@ class Downloader:
             while True:
                 self._poll_and_process()
                 try:
-                    cmd = self._cmd_queue.get(timeout=60)
+                    cmd = self._cmd_queue.get(timeout=900)
                     if cmd == "exit":
                         logger.debug("downloader got exit event")
                         break
+                    if cmd == "poll":
+                        logger.debug("downloader got poll event")
+                        # no need to do anything here, next iteration will poll
                 except Empty:
                     pass
         except KeyboardInterrupt:
