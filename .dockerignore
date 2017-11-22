@@ -1,0 +1,6 @@
+.git/
+
+.*.swp
+*.pyc
+
+venv/
