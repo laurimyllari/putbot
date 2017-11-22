@@ -1,0 +1,29 @@
+version: "2.1"
+
+services:
+        putbot:
+                image: lmyllari/putbot
+                networks:
+                        - traefik-backend
+                expose:
+                        - 5000
+                labels:
+                        - "traefik.backend=putbot"
+                        - "traefik.docker.network=traefik-backend"
+                        - "traefik.frontend.rule=Host:${PUTBOT_DOMAIN}"
+                        - "traefik.enable=true"
+                        - "traefik.port=5000"
+                        - "traefik.default.protocol=http"
+                volumes:
+                        - /tmp/t:/torrents
+                        - /tmp/i:/incomplete
+                        - /tmp/d:/downloads
+                environment:
+                        - PUTBOT_TOKEN
+                        - PUTBOT_ROOTFOLDER
+                        - PUTBOT_CALLBACK_URL
+
+networks:
+        traefik-backend:
+                external: true
+
