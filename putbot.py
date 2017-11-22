@@ -11,14 +11,17 @@ from putbot.downloader import Downloader
 from putbot.watcher import Watcher
 
 class PutBot(object):
-    def __init__(self, client, putio_rootfolder, torrents, incomplete, downloads):
+    def __init__(self, client, putio_rootfolder, torrents, incomplete, downloads, callback_url, listen_port):
         self._client = client
         self._putio_rootfolder = putio_rootfolder
         self._torrents = torrents
         self._incomplete = incomplete
         self._downloads = downloads
+        self._callback_url = callback_url
+        self._listen_port = listen_port
         self._watcher_cmd_queue = Queue()
         self._downloader_cmd_queue = Queue()
+        self._callback_listener_cmd_queue = Queue()
 
     def run(self):
         logging.info("launch torrent watcher process for {}".format(self._torrents))
@@ -30,6 +33,8 @@ class PutBot(object):
         self._downloader = Downloader(self._downloader_cmd_queue, self._client, self._putio_rootfolder, self._incomplete, self._downloads)
         self._downloader_process = Process(target = self._downloader.run)
         self._downloader_process.start()
+
+        logging.info("launch callback listener on port {}".format(self._listen_port))
 
     def exit(self):
         logging.info("shut down putbot")
