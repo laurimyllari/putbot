@@ -1,5 +1,9 @@
 FROM python:2-slim
 
+VOLUME /torrents
+VOLUME /incomplete
+VOLUME /downloads
+
 WORKDIR /opt/putbot
 
 EXPOSE 5000
