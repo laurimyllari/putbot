@@ -9,11 +9,12 @@ from Queue import Empty
 logger = logging.getLogger(__name__)
 
 class Watcher:
-    def __init__(self, cmd_queue, directory, client, rootfolder):
+    def __init__(self, cmd_queue, directory, client, rootfolder, callback_url):
         self._cmd_queue = cmd_queue
         self._directory = directory
         self._client = client
         self._rootfolder = rootfolder
+        self._callback_url = callback_url
 
     def run(self):
         logger.info("started")
@@ -59,10 +60,10 @@ class Watcher:
         _, ext = os.path.splitext(path)
         if ext == '.magnet':
             with open(path) as f: magnet_uri = f.read()
-            transfer = self._client.Transfer.add_url(magnet_uri, parent_id=self._rootfolder)
+            transfer = self._client.Transfer.add_url(magnet_uri, parent_id=self._rootfolder, callback_url=self._callback_url)
             os.unlink(path)
         elif ext == '.torrent':
-            transfer = self._client.Transfer.add_torrent(path, parent_id=self._rootfolder)
+            transfer = self._client.Transfer.add_torrent(path, parent_id=self._rootfolder, callback_url=self._callback_url)
             os.unlink(path)
         else:
             logger.info("unknown file extension {}".format(filename))

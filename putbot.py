@@ -26,7 +26,7 @@ class PutBot(object):
 
     def run(self):
         logging.info("launch torrent watcher process for {}".format(self._torrents))
-        self._watcher = Watcher(self._watcher_cmd_queue, self._torrents, self._client, self._putio_rootfolder)
+        self._watcher = Watcher(self._watcher_cmd_queue, self._torrents, self._client, self._putio_rootfolder, self._callback_url)
         self._watcher_process = Process(target = self._watcher.run)
         self._watcher_process.start()
 
@@ -79,7 +79,9 @@ if __name__ == '__main__':
     incomplete = os.getenv("PUTBOT_INCOMPLETE", config.get("local", "incomplete"))
     downloads = os.getenv("PUTBOT_DOWNLOADS", config.get("local", "downloads"))
 
-    putbot = PutBot(client, putio_rootfolder, torrents, incomplete, downloads)
+    callback_url = os.getenv("PUTBOT_CALLBACK_URL", config.get("local", "callback_url"))
+
+    putbot = PutBot(client, putio_rootfolder, torrents, incomplete, downloads, callback_url)
 
     putbot.run()
 
