@@ -71,7 +71,7 @@ if __name__ == '__main__':
     config.read("putbot.ini")
 
     oauth_token = os.getenv("PUTBOT_TOKEN", config.get("putio", "token"))
-    client = putiopy.Client(oauth_token)
+    client = putiopy.Client(oauth_token, use_retry=True)
 
     putio_rootfolder = os.getenv("PUTBOT_ROOTFOLDER", config.get("putio", "rootfolder"))
 
