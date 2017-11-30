@@ -121,6 +121,9 @@ class Downloader:
 
         if crc32 != fobj.crc32:
             logging.error('file %s CRC32 is %s, should be %s' % (filepath, crc32, fobj.crc32))
+            # remove corrupted file so it can be redownloaded
+            logging.info('removing {}'.format(filepath))
+            os.unlink(filepath)
             return False
 
         return True
