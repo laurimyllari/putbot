@@ -47,7 +47,10 @@ class Downloader:
     def _poll_and_process(self):
         logger.info("checking for files to download")
         for f in self._client.File.list(parent_id=self._rootfolder):
-            self._process(f)
+            try:
+                self._process(f)
+            except Exception as e:
+                logger.exception("error downloading {}".format(f))
 
     def _process(self, f):
         logger.info("process {}".format(f.name))
