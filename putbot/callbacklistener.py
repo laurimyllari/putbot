@@ -14,10 +14,10 @@ class CallbackListenerWebApp(Flask):
 
     def receive(self):
         if request.method == "POST":
-            logger.info("received POST: {}".format(request.data))
+            logger.info(u"received POST: {}".format(request.data))
             self._downloader_cmd_queue.put_nowait("poll")
         else:
-            logger.warn("unsupported HTTP method: {}".format(request.data))
+            logger.warn(u"unsupported HTTP method: {}".format(request.data))
         return ""
 
 

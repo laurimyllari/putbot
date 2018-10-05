@@ -50,63 +50,63 @@ class Downloader:
             try:
                 self._process(f)
             except Exception as e:
-                logger.exception("error downloading {}".format(f))
+                logger.exception(u"error downloading {}".format(f))
 
     def _process(self, f):
-        logger.info("process {}".format(f.name))
+        logger.info(u"process {}".format(f.name))
 
         self._download(f, self._incomplete)
         if self._verify(f, self._incomplete):
-            logger.info("verified {}".format(f.name))
+            logger.info(u"verified {}".format(f.name))
             self._move(f, self._incomplete, self._downloads)
             f.delete()
         else:
-            logger.warning("verification failed {}".format(f.name))
+            logger.warning(u"verification failed {}".format(f.name))
 
     def _download(self, f, path):
-        logger.info("download {} to {}".format(f.name, path))
+        logger.info(u"download {} to {}".format(f.name, path))
         if f.file_type == "FOLDER":
-            logger.debug("{} is a folder".format(f.name))
+            logger.debug(u"{} is a folder".format(f.name))
             destdir = os.path.join(path, f.name)
             if not os.path.exists(destdir):
                 os.makedirs(destdir)
             for child in f.dir():
                 self._download(child, destdir)
         else:
-            logger.debug("{} is a file".format(f.name))
+            logger.debug(u"{} is a file".format(f.name))
             self._download_file(f, path)
 
     def _download_file(self, f, path):
-        logger.debug("download file {} to {}".format(f.name, path))
+        logger.debug(u"download file {} to {}".format(f.name, path))
         destfile = os.path.join(path, f.name)
 
         if os.path.exists(destfile):
             if os.path.getsize(destfile) == f.size and not os.path.exists(destfile+".aria2"):
-                logger.info("{} is already correct size ({})".format(destfile, f.size))
+                logger.info(u"{} is already correct size ({})".format(destfile, f.size))
                 return
 
         dl_redirect = self._client.request('/files/%s/download' % f.id, raw=True, allow_redirects=False)
         if dl_redirect.status_code == 302:
             url = dl_redirect.headers["Location"]
-            logger.debug("download redirect: {}".format(url))
+            logger.debug(u"download redirect: {}".format(url))
             # subprocess.call(["wget", "-c", "-O", destfile, url])
             subprocess.call(["aria2c", "-c", "-x4", "-d", path, "-o", f.name, url])
 
     def _verify(self, f, path):
-        logger.info("verify {} in {}".format(f.name, path))
+        logger.info(u"verify {} in {}".format(f.name, path))
         if f.file_type == "FOLDER":
-            logger.debug("{} is a folder".format(f.name))
+            logger.debug(u"{} is a folder".format(f.name))
             destdir = os.path.join(path, f.name)
             for child in f.dir():
                 if not self._verify(child, destdir):
                     return False
         else:
-            logger.debug("{} is a file".format(f.name))
+            logger.debug(u"{} is a file".format(f.name))
             return self._verify_file(f, path)
         return True
 
     def _verify_file(self, fobj, path):
-        logger.debug("verify file {} in {}".format(fobj.name, path))
+        logger.debug(u"verify file {} in {}".format(fobj.name, path))
         crcbin = 0
         filepath = os.path.join(path, fobj.name)
         with io.open(filepath, 'rb') as f:
@@ -122,13 +122,13 @@ class Downloader:
         if crc32 != fobj.crc32:
             logging.error('file %s CRC32 is %s, should be %s' % (filepath, crc32, fobj.crc32))
             # remove corrupted file so it can be redownloaded
-            logging.info('removing {}'.format(filepath))
+            logging.info(u'removing {}'.format(filepath))
             os.unlink(filepath)
             return False
 
         return True
 
     def _move(self, fobj, src, dst):
-        logger.info("move {} from {} to {}".format(fobj.name, src, dst))
+        logger.info(u"move {} from {} to {}".format(fobj.name, src, dst))
         shutil.move(os.path.join(src, fobj.name), dst)
 

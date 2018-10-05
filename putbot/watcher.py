@@ -66,4 +66,4 @@ class Watcher:
             transfer = self._client.Transfer.add_torrent(path, parent_id=self._rootfolder, callback_url=self._callback_url)
             os.unlink(path)
         else:
-            logger.info("unknown file extension {}".format(filename))
+            logger.info(u"unknown file extension {}".format(filename))
